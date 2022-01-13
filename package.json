@@ -1,22 +1,7 @@
 {
-  "name": "twitter-bot",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/leo3friedman/Twitter-Bot.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/leo3friedman/Twitter-Bot/issues"
-  },
-  "homepage": "https://github.com/leo3friedman/Twitter-Bot#readme",
   "dependencies": {
-    "twit": "^2.2.11"
+    "axios": "^0.24.0",
+    "google-spreadsheet": "^3.2.0",
+    "googleapis": "^39.2.0"
   }
 }
