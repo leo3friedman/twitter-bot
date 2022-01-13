@@ -36,43 +36,163 @@ function getDate(){
     return mm + '/' + dd + '/' + yyyy;
 }
 
-function getAndLogData(user, options, sheet, blockedList, addToBlockList){
-    axios.get(generateURL(userIDs[user]), options)
-        .then(function (response) {
-            let data = [];
-            response.data.data.forEach((d)=>{
-                let addToSheet = true;
-                blockedList.forEach((username)=>{
-                    if(username === "@"+d.username){
-                        addToSheet = false;
-                    }
-                })
-                if(addToSheet){
-                    if(addToBlockList){
-                        data.push({date_collected: getDate(),username: "@" + d.username})
-                    } else {
-                        data.push({date_collected: getDate(),username: "@" + user, new_follower: "@" + d.username})
-                    }
+// function getAndLogData(user, options, sheet, blockedList, addToBlockList){
+//     axios.get(generateURL(userIDs[user]), options)
+//         .then(function (response) {
+//             let data = [];
+//             response.data.data.forEach((d)=>{
+//                 let addToSheet = true;
+//                 blockedList.forEach((username)=>{
+//                     if(username === "@"+d.username){
+//                         addToSheet = false;
+//                     }
+//                 })
+//                 if(addToSheet){
+//                     if(addToBlockList){
+//                         data.push({date_collected: getDate(),username: "@" + d.username})
+//                     } else {
+//                         data.push({date_collected: getDate(),username: "@" + user, new_follower: "@" + d.username})
+//                     }
+//                 }
+//             })
+//             logData(sheet, data);
+//         })
+// }
+async function getAndLogData(user, options, sheets, blockedList){
+    // usersTracking.forEach((user)=>{
+        axios.get(generateURL(user.id), options).then((response)=>{
+            let data = []
+            response.data.data.forEach((obj)=>{
+                if(!blockedList.includes("@"+obj.username)){
+                    data.push({date_collected: getDate(), tracked_account: user.username, new_follower: "@" + obj.username, blocked: "@" + obj.username})
                 }
             })
-            logData(sheet, data);
-        })
+            // logData(sheets.newFollowers, data)
+            logData(sheets.blockedList, data)
+        // })
+    })
 }
+
+async function main(){
+
+
+
+
+
+}
+
+async function getUserTracking(){
+    await doc.useServiceAccountAuth(creds);
+    await doc.loadInfo();
+    const sheets = {
+        newFollowers: doc.sheetsByIndex[0],
+        usersTracking: doc.sheetsByIndex[1],
+        blockedList: doc.sheetsByIndex[2]
+    }
+    const usersTrackingRows = await sheets.usersTracking.getRows();
+    let usersTracking = [];
+    usersTrackingRows.forEach((row)=>{
+        usersTracking.push({username: row.username, id: row.id})
+    })
+    return usersTracking
+}
+
+async function getBlockedList(){
+    await doc.useServiceAccountAuth(creds);
+    await doc.loadInfo();
+    const sheets = {
+        newFollowers: doc.sheetsByIndex[0],
+        usersTracking: doc.sheetsByIndex[1],
+        blockedList: doc.sheetsByIndex[2]
+    }
+    const blockedRows = await sheets.blockedList.getRows();
+    let blockedList = [];
+    blockedRows.forEach((row)=>{
+        blockedList.push(row.blocked)
+    })
+    return blockedList
+}
+
+function start(){
+    getUserTracking().then(value => {
+        value.forEach(user=>{
+
+        })
+    })
+}
+start();
+
+// (async function() {
+//     await doc.useServiceAccountAuth(creds);
+//     await doc.loadInfo();
+//     console.log(doc.title);
+//     const sheets = {
+//         newFollowers: doc.sheetsByIndex[0],
+//         usersTracking: doc.sheetsByIndex[1],
+//         blockedList: doc.sheetsByIndex[2]
+//     }
+//
+//     const usersTrackingRows = await sheets.usersTracking.getRows();
+//     let usersTracking = [];
+//     usersTrackingRows.forEach((row)=>{
+//         usersTracking.push({username: row.username, id: row.id})
+//     })
+//     console.log(usersTracking)
+// }());
 
 (async function() {
     await doc.useServiceAccountAuth(creds);
     await doc.loadInfo();
     console.log(doc.title);
-    const sheet1 = doc.sheetsByIndex[0];
-    const sheet2 = doc.sheetsByIndex[1];
-    const rows = await sheet2.getRows();
-    let blockList = [];
-    rows.forEach((row)=>{
-        blockList.push(row.username)
+    const sheets = {
+        newFollowers: doc.sheetsByIndex[0],
+        usersTracking: doc.sheetsByIndex[1],
+        blockedList: doc.sheetsByIndex[2]
+    }
+
+    const usersTrackingRows = await sheets.usersTracking.getRows();
+    let usersTracking = [];
+    usersTrackingRows.forEach((row)=>{
+        usersTracking.push({username: row.username, id: row.id})
     })
+    // console.log(usersTracking)
+
+
+
+    // usersTracking.forEach((user)=>{
+    //     (async function(){
+    //         const blockedRows = await sheets.blockedList.getRows();
+    //         let blockedList = [];
+    //         blockedRows.forEach((row)=>{
+    //             blockedList.push(row.blocked)
+    //         })
+    //         return blockedList
+    //         // await getAndLogData(user, options, sheets, blockedList)
+    //     }()).then((value)=>{
+    //         console.log(value)
+    //         getAndLogData(user, options, sheets, value)
+    //     })
+    // })
+    // const blockedRows = await sheets.blockedList.getRows();
+    // let blockedList = [];
+    // blockedRows.forEach((row)=>{
+    //     blockedList.push(row.blocked)
+    // })
+    // console.log(blockedList)
+    // await getAndLogData(usersTracking[0], options, sheets, blockedList)
+
+
+    const blockedRows = await sheets.blockedList.getRows();
+    let blockedList = [];
+    blockedRows.forEach((row)=>{
+        blockedList.push(row.username)
+    })
+    // await getAndLogData(usersTracking[0], options, sheets, blockedList)
+
 
     // getAndLogData("danieldessert", options, sheet2, blockList, true)
-    getAndLogData("danieldessert", options, sheet1, blockList, false)
+    // getAndLogData("danieldessert", options, sheet1, blockList, false)
 
-    await sheet1.saveUpdatedCells()
+    await sheets.newFollowers.saveUpdatedCells()
+    await sheets.blockedList.saveUpdatedCells()
 }());
