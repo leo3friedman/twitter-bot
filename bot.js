@@ -28,32 +28,15 @@ function getNewFollowers(data, blockedList) {
   return data.filter((a) => !blockedList.includes(a));
 }
 
-async function getUserTracking() {
-  await doc.useServiceAccountAuth(creds);
-  await doc.loadInfo();
-  const sheets = {
-    newFollowers: doc.sheetsByIndex[0],
-    usersTracking: doc.sheetsByIndex[2],
-    blockedList: doc.sheetsByIndex[3],
-  };
-  const usersTrackingRows = await sheets.usersTracking.getRows();
-  let usersTracking = [];
-  usersTrackingRows.forEach((row) => {
-    usersTracking.push({ username: row.username, id: row.id });
-  });
-  return usersTracking;
-}
-
 async function getBlockedList() {
   await doc.useServiceAccountAuth(creds);
   await doc.loadInfo();
   const sheets = {
-    newFollowers: doc.sheetsByIndex[0],
-    usersTracking: doc.sheetsByIndex[1],
-    blockedList: doc.sheetsByIndex[3],
-    blockedList2: doc.sheetsByIndex[4],
+    newFollowers: doc.sheetsById[2078509453],
+    usersTracking: doc.sheetsById[919336525],
+    blockedList: doc.sheetsById[690408661],
   };
-  const blockedRows = await sheets.blockedList2.getRows();
+  const blockedRows = await sheets.blockedList.getRows();
   let blockedList = [];
   blockedRows.forEach((row) => {
     blockedList.push(row.blocked);
@@ -65,32 +48,12 @@ function isNotable(followers, following) {
   return (followers + 1) / (following + 1) > 10;
 }
 
-async function reorderUserTracking(users, sheet) {
-  await sheet.loadCells("A1:B20").then(() => {
-    for (let i = 1; i < users.length; i++) {
-      const aCell = sheet.getCell(i, 0);
-      const bCell = sheet.getCell(i, 1);
-
-      aCell.value = users[i].username;
-      bCell.value = users[i].id;
-    }
-    const lastACell = sheet.getCell(users.length, 0);
-    const lastBCell = sheet.getCell(users.length, 1);
-
-    lastACell.value = users[0].username;
-    lastBCell.value = users[0].id;
-  });
-  await sheet.saveUpdatedCells();
-}
-
 async function main() {
   await doc.useServiceAccountAuth(creds);
   await doc.loadInfo();
   const sheets = {
-    oldNewFollowers: doc.sheetsByIndex[0],
     newFollowers: doc.sheetsById[2078509453],
     usersTracking: doc.sheetsById[919336525],
-    oldBlockedList: doc.sheetsByIndex[3],
     blockedList: doc.sheetsById[690408661],
   };
 
