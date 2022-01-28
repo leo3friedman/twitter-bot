@@ -1,13 +1,13 @@
+//TODO: hide authorization token
+
 const { format } = require("date-fns");
 const axios = require("axios");
 const { GoogleSpreadsheet } = require("google-spreadsheet");
-const creds = require("./credentials.json");
+const creds = require("./google-credentials.json");
+const twitterCreds = require("./twitter-credentials.json");
 
-const options = {
-  headers: {
-    Authorization:
-      "Bearer AAAAAAAAAAAAAAAAAAAAAN8EYAEAAAAAN83bItWvS%2FLVb%2FgtMv4%2BvRZ7yvU%3DsZR1K6Fcc1eW55Jsv71u6omYk5UrZo3afA8eU1gKGN0xBvQnti",
-  },
+const axiosOptions = {
+  headers: twitterCreds,
 };
 
 const doc = new GoogleSpreadsheet(
@@ -20,7 +20,7 @@ function getUserFollowing(id, options) {
 function getUserInfo(id) {
   return axios.get(
     `https://api.twitter.com/2/users?ids=${id}&user.fields=public_metrics`,
-    options
+    axiosOptions
   );
 }
 
@@ -78,7 +78,7 @@ async function main() {
   console.log("tracking... " + userTracking.username);
   if (userTracking.username === "ethane1x") console.log("Last One!");
 
-  const twitterData = await getUserFollowing(userTracking.id, options);
+  const twitterData = await getUserFollowing(userTracking.id, axiosOptions);
   const userFollowing = twitterData.data.data.map((a) => a.id);
   const blockedList = await getBlockedList();
   const newFollowers = getNewFollowers(userFollowing, blockedList);
