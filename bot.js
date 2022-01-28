@@ -87,18 +87,16 @@ async function main() {
   await doc.useServiceAccountAuth(creds);
   await doc.loadInfo();
   const sheets = {
-    newFollowers: doc.sheetsByIndex[0],
-    newFollowers2: doc.sheetsByIndex[1],
-    usersTracking: doc.sheetsByIndex[2],
-    blockedList: doc.sheetsByIndex[3],
-    blockedList2: doc.sheetsByIndex[4],
+    oldNewFollowers: doc.sheetsByIndex[0],
+    newFollowers: doc.sheetsById[2078509453],
+    usersTracking: doc.sheetsById[919336525],
+    oldBlockedList: doc.sheetsByIndex[3],
+    blockedList: doc.sheetsById[690408661],
   };
 
-  // const usersTracking = await getUserTracking();
   const usersTracking = (await sheets.usersTracking.getRows()).map(
     (row) => row._rawData
   );
-
   const lastTrackedArr = usersTracking.map((user) => parseInt(user[0]));
   const indexOfUserToTrack = lastTrackedArr.indexOf(
     Math.min.apply(Math, lastTrackedArr)
@@ -113,15 +111,6 @@ async function main() {
   console.log(userTracking);
   sheets.usersTracking.getCell(indexOfUserToTrack + 1, 0).value = Date.now();
   await sheets.usersTracking.saveUpdatedCells();
-  return;
-
-  // const userTracking = {
-  //   username: usersTracking[0][0],
-  //   id: usersTracking[0][1],
-  // };
-  //TODO: instead of reordering, just update the last checked (Date.now()) and always run on oldest
-
-  // await reorderUserTracking(usersTracking, sheets.usersTracking);
 
   console.log("tracking... " + userTracking.username);
   if (userTracking.username === "ethane1x") console.log("Last One!");
@@ -157,9 +146,9 @@ async function main() {
     };
   });
 
-  await sheets.newFollowers2.addRows(loggableNewFollowerData);
-  await sheets.blockedList2.addRows(loggableNewBlockedData);
-  await sheets.newFollowers2.saveUpdatedCells();
-  await sheets.blockedList2.saveUpdatedCells();
+  await sheets.newFollowers.addRows(loggableNewFollowerData);
+  await sheets.blockedList.addRows(loggableNewBlockedData);
+  await sheets.newFollowers.saveUpdatedCells();
+  await sheets.blockedList.saveUpdatedCells();
 }
 main();
