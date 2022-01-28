@@ -1,5 +1,7 @@
 const { format } = require("date-fns");
 const axios = require("axios");
+const { GoogleSpreadsheet } = require("google-spreadsheet");
+const creds = require("./credentials.json");
 
 const options = {
   headers: {
@@ -8,17 +10,9 @@ const options = {
   },
 };
 
-const { GoogleSpreadsheet } = require("google-spreadsheet");
-
-const creds = require("./credentials.json"); // the file saved above
-
 const doc = new GoogleSpreadsheet(
   "1mwkrcICr-NKVO8NbmmmNHuxk557bQ27BIlqb_UPOx3I"
 );
-
-async function logDataToSheet(data, sheet) {
-  await sheet.addRows(data);
-}
 
 function getUserFollowing(id, options) {
   return axios.get(`https://api.twitter.com/2/users/${id}/following`, options);
@@ -100,14 +94,39 @@ async function main() {
     blockedList2: doc.sheetsByIndex[4],
   };
 
-  const usersTracking = await getUserTracking();
-  const user = usersTracking[0];
-  await reorderUserTracking(usersTracking, sheets.usersTracking);
+  // const usersTracking = await getUserTracking();
+  const usersTracking = (await sheets.usersTracking.getRows()).map(
+    (row) => row._rawData
+  );
 
-  console.log("tracking... " + user.username);
-  if (user.username === "gafort") console.log("Last One!");
+  const lastTrackedArr = usersTracking.map((user) => parseInt(user[0]));
+  const indexOfUserToTrack = lastTrackedArr.indexOf(
+    Math.min.apply(Math, lastTrackedArr)
+  );
 
-  const twitterData = await getUserFollowing(user.id, options);
+  const userTracking = {
+    username: usersTracking[indexOfUserToTrack][1],
+    id: usersTracking[indexOfUserToTrack][2],
+  };
+
+  await sheets.usersTracking.loadCells();
+  console.log(userTracking);
+  sheets.usersTracking.getCell(indexOfUserToTrack + 1, 0).value = Date.now();
+  await sheets.usersTracking.saveUpdatedCells();
+  return;
+
+  // const userTracking = {
+  //   username: usersTracking[0][0],
+  //   id: usersTracking[0][1],
+  // };
+  //TODO: instead of reordering, just update the last checked (Date.now()) and always run on oldest
+
+  // await reorderUserTracking(usersTracking, sheets.usersTracking);
+
+  console.log("tracking... " + userTracking.username);
+  if (userTracking.username === "ethane1x") console.log("Last One!");
+
+  const twitterData = await getUserFollowing(userTracking.id, options);
   const userFollowing = twitterData.data.data.map((a) => a.id);
   const blockedList = await getBlockedList();
   const newFollowers = getNewFollowers(userFollowing, blockedList);
