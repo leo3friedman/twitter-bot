@@ -1,5 +1,3 @@
-//TODO: hide authorization token
-
 const { format } = require("date-fns");
 const axios = require("axios");
 const { GoogleSpreadsheet } = require("google-spreadsheet");
@@ -48,7 +46,7 @@ function isNotable(followers, following) {
   return (followers + 1) / (following + 1) > 10;
 }
 
-async function main() {
+async function logNewFollowers() {
   await doc.useServiceAccountAuth(creds);
   await doc.loadInfo();
   const sheets = {
@@ -71,7 +69,6 @@ async function main() {
   };
 
   await sheets.usersTracking.loadCells();
-  console.log(userTracking);
   sheets.usersTracking.getCell(indexOfUserToTrack + 1, 0).value = Date.now();
   await sheets.usersTracking.saveUpdatedCells();
 
@@ -114,4 +111,4 @@ async function main() {
   await sheets.newFollowers.saveUpdatedCells();
   await sheets.blockedList.saveUpdatedCells();
 }
-main();
+module.exports = logNewFollowers;

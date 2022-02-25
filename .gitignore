@@ -1,3 +1,6 @@
 
 google-credentials.json
 twitter-credentials.json
+*.zip
+*.xml
+
