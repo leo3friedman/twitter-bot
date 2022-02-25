@@ -15,6 +15,7 @@ const doc = new GoogleSpreadsheet(
 function getUserFollowing(id, options) {
   return axios.get(`https://api.twitter.com/2/users/${id}/following`, options);
 }
+
 function getUserInfo(id) {
   return axios.get(
     `https://api.twitter.com/2/users?ids=${id}&user.fields=public_metrics`,
@@ -26,20 +27,9 @@ function getNewFollowers(data, blockedList) {
   return data.filter((a) => !blockedList.includes(a));
 }
 
-async function getBlockedList() {
-  await doc.useServiceAccountAuth(creds);
-  await doc.loadInfo();
-  const sheets = {
-    newFollowers: doc.sheetsById[2078509453],
-    usersTracking: doc.sheetsById[919336525],
-    blockedList: doc.sheetsById[690408661],
-  };
-  const blockedRows = await sheets.blockedList.getRows();
-  let blockedList = [];
-  blockedRows.forEach((row) => {
-    blockedList.push(row.blocked);
-  });
-  return blockedList;
+async function getBlockedList(blockedListDoc) {
+  const blockedRows = await blockedListDoc.getRows();
+  return blockedRows.map((row) => row.blocked);
 }
 
 function isNotable(followers, following) {
@@ -73,11 +63,11 @@ async function logNewFollowers() {
   await sheets.usersTracking.saveUpdatedCells();
 
   console.log("tracking... " + userTracking.username);
-  if (userTracking.username === "ethane1x") console.log("Last One!");
 
   const twitterData = await getUserFollowing(userTracking.id, axiosOptions);
   const userFollowing = twitterData.data.data.map((a) => a.id);
-  const blockedList = await getBlockedList();
+  const blockedList = await getBlockedList(sheets.blockedList);
+  return;
   const newFollowers = getNewFollowers(userFollowing, blockedList);
   const idString = newFollowers.join(",");
   const followingInfo = (await getUserInfo(idString)).data.data;
@@ -110,5 +100,6 @@ async function logNewFollowers() {
   await sheets.blockedList.addRows(loggableNewBlockedData);
   await sheets.newFollowers.saveUpdatedCells();
   await sheets.blockedList.saveUpdatedCells();
+  console.log("logged");
 }
 module.exports = logNewFollowers;
