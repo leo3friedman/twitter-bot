@@ -23,13 +23,28 @@ function getUserInfo(id) {
   );
 }
 
-function getNewFollowers(data, blockedList) {
-  return data.filter((a) => !blockedList.includes(a));
+async function getUserTracking(userTrackingDoc) {
+  const usersTracking = (await userTrackingDoc.getRows()).map(
+    (row) => row._rawData
+  );
+  const lastTrackedArr = usersTracking.map((user) => parseInt(user[0]));
+  const indexOfUserToTrack = lastTrackedArr.indexOf(
+    Math.min.apply(Math, lastTrackedArr)
+  );
+  return {
+    username: usersTracking[indexOfUserToTrack][1],
+    id: usersTracking[indexOfUserToTrack][2],
+    index: indexOfUserToTrack,
+  };
 }
 
 async function getBlockedList(blockedListDoc) {
   const blockedRows = await blockedListDoc.getRows();
   return blockedRows.map((row) => row.blocked);
+}
+
+function getNewFollowers(data, blockedList) {
+  return data.filter((a) => !blockedList.includes(a));
 }
 
 function isNotable(followers, following) {
@@ -45,21 +60,10 @@ async function logNewFollowers() {
     blockedList: doc.sheetsById[690408661],
   };
 
-  const usersTracking = (await sheets.usersTracking.getRows()).map(
-    (row) => row._rawData
-  );
-  const lastTrackedArr = usersTracking.map((user) => parseInt(user[0]));
-  const indexOfUserToTrack = lastTrackedArr.indexOf(
-    Math.min.apply(Math, lastTrackedArr)
-  );
-
-  const userTracking = {
-    username: usersTracking[indexOfUserToTrack][1],
-    id: usersTracking[indexOfUserToTrack][2],
-  };
+  const userTracking = await getUserTracking(sheets.usersTracking);
 
   await sheets.usersTracking.loadCells();
-  sheets.usersTracking.getCell(indexOfUserToTrack + 1, 0).value = Date.now();
+  sheets.usersTracking.getCell(userTracking.index + 1, 0).value = Date.now();
   await sheets.usersTracking.saveUpdatedCells();
 
   console.log("tracking... " + userTracking.username);
@@ -67,7 +71,6 @@ async function logNewFollowers() {
   const twitterData = await getUserFollowing(userTracking.id, axiosOptions);
   const userFollowing = twitterData.data.data.map((a) => a.id);
   const blockedList = await getBlockedList(sheets.blockedList);
-  return;
   const newFollowers = getNewFollowers(userFollowing, blockedList);
   const idString = newFollowers.join(",");
   const followingInfo = (await getUserInfo(idString)).data.data;
